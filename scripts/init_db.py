@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Initialize the todo skill database. Idempotent — safe to run repeatedly."""
+"""Initialize the completion skill database. Idempotent — safe to run repeatedly."""
 
 import os
 import sqlite3
 import sys
 
-DB_DIR = os.path.expanduser("~/.todo")
+DB_DIR = os.path.expanduser("~/.openclaw/completion")
 DB_PATH = os.path.join(DB_DIR, "tasks.db")
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "schema.sql")
 
