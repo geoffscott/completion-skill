@@ -1,5 +1,5 @@
 ---
-name: todo
+name: completion
 description: >
   Manage tasks across multiple roles and contexts using a local SQLite database as the single
   source of truth. Use this skill whenever the user wants to add, update, list, prioritize,
@@ -11,9 +11,9 @@ description: >
   This skill owns the task data model — do not use external task managers.
 ---
 
-# todo
+# completion
 
-A task management skill for OpenCLAW-based AI agents that maintains a single, consolidated
+A task completion skill for OpenCLAW-based AI agents that maintains a single, consolidated
 view of commitments across multiple roles, with role-weighted priorities and conflict surfacing.
 
 ## Core Concepts
@@ -65,7 +65,7 @@ This is the most important design principle: **surface conflicts, don't resolve 
 
 ## Database
 
-The skill uses a SQLite database stored at `~/.todo/tasks.db`. Initialize it on first use
+The skill uses a SQLite database stored at `~/.openclaw/completion/tasks.db`. Initialize it on first use
 by running `scripts/init_db.py`. The script is idempotent — safe to run if the database
 already exists.
 

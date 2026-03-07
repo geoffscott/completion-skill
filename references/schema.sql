@@ -1,5 +1,5 @@
 -- todo skill schema
--- SQLite database at ~/.todo/tasks.db
+-- SQLite database at ~/.openclaw/completion/tasks.db
 
 CREATE TABLE IF NOT EXISTS roles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

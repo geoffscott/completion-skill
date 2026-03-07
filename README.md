@@ -36,7 +36,7 @@ Talk to your agent naturally:
 
 ## How it works
 
-The skill stores tasks in a local SQLite database at `~/.todo/tasks.db`. The database is initialized automatically on first use with default roles. You can add, rename, or reweight roles at any time.
+The skill stores tasks in a local SQLite database at `~/.openclaw/completion/tasks.db`. The database is initialized automatically on first use with default roles. You can add, rename, or reweight roles at any time.
 
 Tasks belong to exactly one role and have a priority (p1/p2/p3). When tasks at the same priority compete across roles, the skill uses role weights to suggest an ordering — but always surfaces the conflict for you to decide.
 

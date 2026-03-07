@@ -47,7 +47,7 @@ The valid priorities are: `p1`, `p2`, `p3`.
 After making changes, verify by running the init script in a clean environment:
 
 ```bash
-rm -rf ~/.todo
+rm -rf ~/.openclaw/completion
 python3 scripts/init_db.py
 ```
 
@@ -55,7 +55,7 @@ Then test basic operations:
 
 ```python
 import sqlite3
-conn = sqlite3.connect('~/.todo/tasks.db')
+conn = sqlite3.connect('~/.openclaw/completion/tasks.db')
 c = conn.cursor()
 # Insert a task, update its status, verify history triggers fire
 ```
@@ -72,5 +72,5 @@ c = conn.cursor()
 - Don't add calendar integration — that's a separate skill for a future release.
 - Don't add flow metrics or cycle time tracking to SKILL.md instructions — the schema tracks status history for future use, but the skill doesn't surface it yet.
 - Don't add dependencies beyond Python standard library and SQLite.
-- Don't change the database path (`~/.todo/tasks.db`) without updating all three files.
+- Don't change the database path (`~/.openclaw/completion/tasks.db`) without updating all three files.
 - Don't use the word "dropped" as a status — we deliberately consolidated it into `done`.
