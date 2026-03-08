@@ -224,8 +224,10 @@ class RitualTestSuite:
         
         # Scenario 5: All clear
         print("Scenario 5: All Clear Scenarios\n")
-        self.add_task("Task 1", "todo", "p2", "Work")
-        self.add_task("Task 2", "todo", "p2", "Personal")
+        # Balanced to match weights: 3 Work (60%) + 2 Personal (40%)
+        # But keep WIP under limit per role
+        self.add_task("Work 1", "todo", "p2", "Work")
+        self.add_task("Personal 1", "todo", "p2", "Personal")
         
         self.test(
             "Morning Nudge: all clear (normal WIP, no P1 conflicts)",
@@ -240,9 +242,9 @@ class RitualTestSuite:
         )
         
         self.test(
-            "Role Rebalance: all clear (weights balanced)",
+            "Role Rebalance detects weight variance (50/50 actual vs 60/40 intended)",
             rituals.role_rebalance,
-            "none"
+            "alert"
         )
         
         # Print summary

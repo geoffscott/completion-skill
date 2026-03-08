@@ -56,7 +56,7 @@ def load_config(skill_dir: str = None) -> Dict:
         # Merge: user config overrides defaults
         if "rituals" in user_config:
             default_config["rituals"].update(user_config["rituals"])
-        return user_config if user_config else default_config
+        return default_config
     
     return default_config
 
