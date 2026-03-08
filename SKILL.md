@@ -154,6 +154,157 @@ Walk through three questions:
 Again: conversational, not a report. Surface observations, ask questions, let the user decide
 what to do about each finding.
 
+
+## Autonomous Rituals & Heartbeat Events
+
+Beyond user-initiated workflows, the completion skill should run predictive health checks and surface insights automatically. These rituals apply kaizen (continuous improvement) and Theory of Constraints thinking to task flow.
+
+### Morning Nudge (Optional, Configured)
+
+**Trigger:** User's configured morning time, or at skill startup if user has active tasks.
+
+**Purpose:** Confirm focus and surface immediate conflicts before the day starts.
+
+**Interaction:**
+1. Query tasks in `in_progress` and `todo` statuses
+2. Show WIP count vs. configured limit (default: 2-3 per role)
+3. Surface P1s across roles: "You have [count] P1s competing. Still good with the priority order?"
+4. Ask: "What's the one thing that moves the needle most today?"
+5. If multiple roles have urgent work: surface the conflict explicitly
+6. Optional: "Any blockers from yesterday that need escalation?"
+
+**Agent behavior:**
+- Be brief (1-2 minutes)
+- Only interrupt if there's genuine conflict or WIP overflow
+- Don't repeat if user already ran standup today
+
+### Stuck Alert (Daily or Per-Workflow)
+
+**Trigger:** Check on every task operation; also run nightly if configured.
+
+**Purpose:** Prevent tasks from rotting in `blocked` or `in_progress` limbo.
+
+**Detection:**
+1. **Stalled in progress** — tasks in `in_progress` > 3 days without update
+2. **Blocked too long** — tasks in `blocked` > 5 days (alert at day 3: "Still waiting on [blocker]?")
+3. **Backlog accumulation** — backlog growing 20%+ faster than completion rate this week
+4. **Role starvation** — any role with zero `todo` or `in_progress` tasks
+
+**Interaction:**
+When stuck items detected, surface them conversationally:
+> "You've got [Task X] waiting on [blocker] for 4 days. Want to bump it, drop it, or find another way to unblock?"
+
+Or:
+> "[Role] hasn't had any active work in 5 days — is that intentional, or do you want to pull something from the backlog?"
+
+**Agent behavior:**
+- Don't nag (once per day max)
+- Offer concrete actions: escalate blocker, break task into smaller pieces, drop it, replan
+- Link to entities if relevant ("Still waiting on Dani?")
+
+### Weekly Kaizen (Friday or End-of-Week)
+
+**Trigger:** User says "weekly review" or automatically Friday EOD (if configured).
+
+**Purpose:** Move beyond "what got done" to "how can we improve the system."
+
+**Core questions (after standard weekly review):**
+
+1. **Flow health**
+   - Planned vs. completed (how much of your committed `todo` actually finished?)
+   - Average cycle time per priority (P1s taking longer than expected?)
+   - Batch size (did you break work into manageable pieces, or did big tasks take all week?)
+
+2. **Constraint analysis** (Theory of Constraints)
+   - What was the bottleneck this week? (Blocked tasks, context switching, unclear scope?)
+   - Is it the same bottleneck as last week?
+   - Can we remove it, work around it, or should we accept it?
+
+3. **Pattern detection**
+   - Same person/system always blocking? → escalate or document workaround
+   - P2 tasks consistently deprioritized by P1s? → re-examine role weights
+   - Backlog items consistently re-estimated as harder? → improve estimation or slice smaller
+
+4. **Improvement hypothesis**
+   - "You shipped 60% of committed work this week. What would help get closer to 80%?"
+   - Possible answers: smaller batches, clearer acceptance criteria, fewer interruptions, rebalance roles
+
+**Interaction:**
+Conversational, not a report. Ask questions and let the user drive:
+> "You completed 8 of 10 committed tasks. The two that slipped were both [Role] P2s blocked by [external]. Is that a pattern, or a one-off?"
+
+Then:
+> "Want to adjust how we commit next week, or do you want to tackle the blocker differently?"
+
+**Schema tracking:**
+Update `status_history` to track:
+- Timestamp of status transitions
+- Days in each status (for cycle time calculation)
+- Whether task was completed or moved back to backlog
+
+### Role Rebalance (Weekly, After Kaizen)
+
+**Trigger:** After weekly review, or if user says "rebalance roles."
+
+**Purpose:** Align role weights to actual time allocation and changing circumstances.
+
+**Analysis:**
+1. Compare intended role weights to actual task completion by role
+2. Check if priorities shifted mid-week (many P1→P2 moves? → role weight misaligned)
+3. Surface changes in role circumstances (e.g., "Saranam board work doubled this month — should weight change?")
+
+**Interaction:**
+> "This week: Work was 60% of your time, Personal 30%, Saranam 10%.
+> Currently weighted 1.5:1.0:0.5.
+> Still happy with those weights, or should we adjust?"
+
+**Agent behavior:**
+- Suggest adjustments, don't enforce them
+- Keep weights relative (1.0 as baseline)
+- Document the change reason in metadata (e.g., "Q2 focus shift", "board meeting season")
+
+## Configuration
+
+Add optional user settings to `metadata.json`:
+
+```json
+{
+  "rituals": {
+    "morning_nudge": {
+      "enabled": true,
+      "time": "07:00",
+      "wip_limit_per_role": 2,
+      "only_on_conflict": false
+    },
+    "stuck_alert": {
+      "enabled": true,
+      "in_progress_threshold_days": 3,
+      "blocked_threshold_days": 5,
+      "check_frequency": "daily"
+    },
+    "weekly_kaizen": {
+      "enabled": true,
+      "day": "friday",
+      "time": "17:00"
+    },
+    "role_rebalance": {
+      "enabled": true,
+      "after_review": true,
+      "min_variance_percent": 10
+    }
+  }
+}
+```
+
+User can enable/disable rituals and tweak thresholds as their workflow matures.
+
+## Autonomy vs. Interruption
+
+- **Don't be chatty.** Rituals surface one key insight or decision point per check, not a data dump.
+- **Respect momentum.** Don't interrupt mid-task; nudges happen at natural boundaries (start of day, end of week).
+- **Let the user lead.** Offer observations and questions; let them decide actions.
+- **Learn from patterns.** Over time, track which rituals the user finds valuable and adjust frequency/detail accordingly.
+
 ## Interaction Style
 
 - Be concise. Task management is a utility, not a ceremony.

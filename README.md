@@ -1,6 +1,6 @@
-# todo
+# completion
 
-A task management skill for [OpenCLAW](https://openclaw.ai) agents. Maintains a single view of commitments across multiple roles with priority weighting and conflict surfacing.
+A task completion skill for [OpenCLAW](https://openclaw.ai) agents. Maintains a single view of commitments across multiple roles with priority weighting and conflict surfacing.
 
 ## What it does
 
