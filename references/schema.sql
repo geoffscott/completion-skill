@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     due_date TEXT,           -- ISO 8601 date, nullable
     notes TEXT,              -- free-form context, blockers, waiting-on info
     tags TEXT,               -- comma-separated labels
+    entities TEXT,           -- JSON array of entity IDs from ~/.openclaw/entities.json
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -58,3 +59,6 @@ CREATE INDEX IF NOT EXISTS idx_tasks_role ON tasks(role_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
 CREATE INDEX IF NOT EXISTS idx_status_history_task ON status_history(task_id);
+
+-- Index for entity-based queries (SQLite JSON support)
+CREATE INDEX IF NOT EXISTS idx_tasks_entities ON tasks(entities);

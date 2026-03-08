@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Initialize the completion skill database. Idempotent — safe to run repeatedly."""
 
+import json
 import os
 import sqlite3
 import sys
@@ -8,12 +9,22 @@ import sys
 DB_DIR = os.path.expanduser("~/.openclaw/completion")
 DB_PATH = os.path.join(DB_DIR, "tasks.db")
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "schema.sql")
+ENTITIES_PATH = os.path.expanduser("~/.openclaw/entities.json")
 
 # Default roles — the user can add, rename, or remove these after initialization
 DEFAULT_ROLES = [
     ("Work", 1.5, "Professional responsibilities, day job, career tasks"),
     ("Personal", 1.0, "Life admin, health, hobbies, relationships, learning"),
 ]
+
+
+def migrate_entities_column(cursor):
+    """Add entities column if it doesn't exist (idempotent migration)."""
+    cursor.execute("PRAGMA table_info(tasks)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if "entities" not in columns:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN entities TEXT")
+        print("Migrated: added 'entities' column to tasks table")
 
 
 def init_db():
@@ -27,6 +38,11 @@ def init_db():
     with open(SCHEMA_PATH, "r") as f:
         schema_sql = f.read()
     cursor.executescript(schema_sql)
+
+    # Migrate existing databases
+    if not is_new:
+        migrate_entities_column(cursor)
+        conn.commit()
 
     # Insert default roles only if the roles table is empty
     cursor.execute("SELECT COUNT(*) FROM roles")

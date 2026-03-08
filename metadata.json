@@ -1,0 +1,10 @@
+{
+  "skill": "todo",
+  "version": "0.2.0",
+  "entity_integration": {
+    "enabled": true,
+    "registry_path": "~/.openclaw/entities.json",
+    "supported_entity_types": ["people", "organizations", "projects"]
+  },
+  "entity_usage": {}
+}

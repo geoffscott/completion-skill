@@ -169,3 +169,76 @@ what to do about each finding.
 - If the database doesn't exist, initialize it silently and proceed.
 - If a task query finds no matches, say so plainly: "I don't see a task matching [X]. Want
   to add it?"
+
+## Entity Integration
+
+The todo skill integrates with the shared entity registry at `~/.openclaw/entities.json`
+to understand people, organizations, and projects mentioned in tasks. This enables
+entity-aware task management — linking tasks to the people and contexts they involve.
+
+### How It Works
+
+1. **Entity Discovery**: On task creation, scan the title and notes for mentions of known
+   entities (by any of their registered names/aliases). Match against `people`,
+   `organizations`, and `projects` in the registry.
+
+2. **Auto-Enrichment**: When entities are recognized, store their IDs in the task's
+   `entities` field as a JSON array:
+   ```json
+   {"entities": ["dani-pascarella", "oneeleven"]}
+   ```
+
+3. **Entity-Based Queries**: Support natural queries like:
+   - "Show me all tasks for OneEleven"
+   - "What do I need to do with Dani?"
+   - "Saranam tasks this week"
+   - "What's open for Growth Science?"
+
+   These translate to SQL queries filtering on the `entities` JSON field:
+   ```sql
+   SELECT * FROM tasks WHERE entities LIKE '%"oneeleven"%' AND status != 'done'
+   ```
+
+4. **Context-Aware Routing**: When creating tasks, use entity context to infer the
+   correct role. For example, if a task mentions "Dani" (context: oneeleven), default
+   to the Work role. If it mentions "Chai" (context: saranam/personal), default to
+   Personal.
+
+### Entity Enrichment Behavior
+
+When the user says something like "Talk to Dani about Q2 planning":
+
+1. Recognize "Dani" → entity `dani-pascarella` (CEO OneEleven)
+2. Infer related org entity → `oneeleven`
+3. Create task with `entities: ["dani-pascarella", "oneeleven"]`
+4. Infer role → Work (based on entity contexts)
+5. Later, "What do I need to do with Dani?" returns this task
+
+When enriching, be conservative:
+- Only attach entities you're confident about from the text
+- Don't attach every possible entity — just the ones clearly referenced
+- If unsure, create the task without entities rather than guessing wrong
+
+### Reading the Entity Registry
+
+Before enriching tasks, load the registry:
+
+```python
+import json, os
+registry_path = os.path.expanduser("~/.openclaw/entities.json")
+if os.path.exists(registry_path):
+    with open(registry_path) as f:
+        entities = json.load(f)
+```
+
+Build a lookup of all names/aliases → entity IDs for fast matching. The registry
+contains `people`, `organizations`, and `projects`, each with a `names` array of
+known aliases (including voice-to-text variants).
+
+### Cross-Skill Integration
+
+Entity references create natural bridges between skills:
+- A task mentioning "Dani" can be cross-referenced with reflection entries about Dani
+- Weekly reviews can surface entity patterns: "You had 5 tasks about OneEleven this week
+  but none about Growth Science — is that intentional?"
+- Standup can group tasks by entity when relevant: "Three open items with Dani"
