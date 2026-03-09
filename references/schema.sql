@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'backlog'
-        CHECK (status IN ('backlog', 'todo', 'in_progress', 'blocked', 'done')),
+        CHECK (status IN ('backlog', 'to-do', 'in_progress', 'blocked', 'done')),
     priority TEXT NOT NULL DEFAULT 'p2'
         CHECK (priority IN ('p1', 'p2', 'p3')),
     role_id INTEGER NOT NULL REFERENCES roles(id),

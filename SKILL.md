@@ -36,7 +36,7 @@ board, or a freelance practice.
 Every task belongs to exactly one role. Tasks have:
 
 - **title**: short description of what needs to happen
-- **status**: one of `backlog`, `todo`, `in_progress`, `blocked`, `done`
+- **status**: one of `backlog`, `to-do`, `in_progress`, `blocked`, `done`
 - **priority**: `p1` (must do), `p2` (should do), `p3` (nice to do) — within a role
 - **role**: which role this task belongs to
 - **due_date**: optional hard deadline (ISO 8601 date)
@@ -46,8 +46,8 @@ Every task belongs to exactly one role. Tasks have:
 
 Status meanings:
 - `backlog` — captured and triaged, but not committed to yet. The "I know about this but not now" bucket.
-- `todo` — committed to doing soon. The short list of what's actually on deck.
-- `in_progress` — actively working on this right now.
+- `to-do` — ready to work on. Picked from backlog, committed to doing soon. The short list of what's actually on deck—waiting for available capacity to start.
+- `in_progress` — actively being worked on right now (today).
 - `blocked` — waiting on someone or something external. Record who/what in notes.
 - `done` — completed or intentionally abandoned. If dropped rather than finished, note why.
 
@@ -86,7 +86,7 @@ When the user says something like "I need to..." or "remind me to..." or "add a 
 
 1. Extract the task title from what they said
 2. Infer the role from context (ask if ambiguous)
-3. Default status to `backlog` unless context suggests otherwise (e.g., "I need to do this today" → `todo`)
+3. Default status to `backlog` unless context suggests otherwise (e.g., "I need to do this today" → `to-do`)
 4. Default priority to `p2` unless the user signals urgency
 5. Confirm back to the user what was captured, including the inferred role and priority
 6. Insert into the database
@@ -122,7 +122,7 @@ For status transitions, be conversational:
 - Moving to `done`: "Nice — marked [task] as done."
 - Moving to `blocked`: "Got it. Who or what are you waiting on?" (capture in notes)
 - Moving to `backlog`: "Moved [task] back to the backlog."
-- Moving to `todo`: "On deck — [task] is in your to-do list."
+- Moving to `to-do`: "On deck — [task] is in your to-do list."
 
 ### Daily Standup
 
@@ -148,7 +148,7 @@ Walk through three questions:
 2. **What's stuck?** — Tasks that have been `in_progress` or `blocked` for a long time, or tasks
    that were expected this week but didn't get done. Call out any task that's been `blocked`
    for more than a week.
-3. **What needs attention?** — Backlog items that might deserve promotion to `todo`, roles that
+3. **What needs attention?** — Backlog items that might deserve promotion to `to-do`, roles that
    have no active tasks (might be getting neglected), upcoming due dates in the next two weeks.
 
 Again: conversational, not a report. Surface observations, ask questions, let the user decide
