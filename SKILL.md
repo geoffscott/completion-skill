@@ -155,6 +155,7 @@ Again: conversational, not a report. Surface observations, ask questions, let th
 what to do about each finding.
 
 
+
 ## Autonomous Rituals & Heartbeat Events
 
 Beyond user-initiated workflows, the completion skill should run predictive health checks and surface insights automatically. These rituals apply kaizen (continuous improvement) and Theory of Constraints thinking to task flow.
@@ -304,6 +305,84 @@ User can enable/disable rituals and tweak thresholds as their workflow matures.
 - **Respect momentum.** Don't interrupt mid-task; nudges happen at natural boundaries (start of day, end of week).
 - **Let the user lead.** Offer observations and questions; let them decide actions.
 - **Learn from patterns.** Over time, track which rituals the user finds valuable and adjust frequency/detail accordingly.
+
+
+While the completion skill is triggered by user requests (task CRUD, standup, reviews), it also runs autonomous rituals on a schedule defined in metadata.json and orchestrated by Ananda's heartbeat loop.
+
+When the heartbeat is triggered, Ananda:
+
+1. **Checks the current time and day** against ritual schedules in metadata.json
+2. **Invokes the appropriate ritual function** from `scripts/rituals.py`
+3. **Surfaces findings conversationally** if alerts are present
+4. **Returns HEARTBEAT_OK** if all rituals are clear
+
+### Morning Nudge Invocation
+
+**Trigger:** Daily at configured time (default 07:00), or on agent startup if user has active tasks
+
+**Command:** `python3 skills/completion/scripts/rituals.py morning`
+
+**Agent behavior:**
+- If WIP overflow or P1 conflict detected, present findings:
+  > "Morning Nudge: [finding]. What's the one thing moving the needle today?"
+- If all clear, no alert needed
+- Don't repeat if user already ran standup today
+
+### Stuck Alert Invocation
+
+**Trigger:** Every heartbeat check, or nightly (configurable)
+
+**Command:** `python3 skills/completion/scripts/rituals.py stuck`
+
+**Agent behavior:**
+- If stalled or blocked tasks detected, surface them:
+  > "You have [task] blocked on [blocker] for 4 days. Want to escalate, replan, or drop it?"
+- If role starvation detected:
+  > "[Role] has no active work. Intentional, or should we pull from backlog?"
+- Don't nag (max once per day)
+- Offer concrete actions, not just warnings
+
+### Weekly Kaizen Invocation
+
+**Trigger:** Friday EOD (default 17:00), or when user explicitly says "weekly review"
+
+**Command:** `python3 skills/completion/scripts/rituals.py kaizen`
+
+**Agent behavior:**
+- Present flow analysis conversationally (completion rate, cycle time, bottlenecks)
+- Ask improvement question based on findings:
+  > "You completed 70% of committed work. What would help get closer to 80%?"
+- Let user lead; don't prescribe solutions
+- Move to role_rebalance after kaizen if enabled
+
+### Role Rebalance Invocation
+
+**Trigger:** After weekly kaizen, or on explicit request ("rebalance roles")
+
+**Command:** `python3 skills/completion/scripts/rituals.py rebalance`
+
+**Agent behavior:**
+- Compare intended vs. actual role weights:
+  > "This week: Work 65%, Personal 30%, Saranam 5%. Weights are 60%/30%/10%. Still good?"
+- Don't enforce changes; let user decide
+- Document reason for any weight adjustments
+
+### Error Handling & Fallback
+
+- If database is missing or corrupted, initialize it: `python3 scripts/init_db.py`
+- If ritual function raises an exception, log it and return no alert
+- If metadata.json is malformed, use defaults
+- All rituals degrade gracefully if data is sparse (e.g., no tasks yet)
+
+### Extending Rituals
+
+To add a new ritual:
+1. Add function to `scripts/rituals.py` with signature: `def ritual_name(db_path=None, config=None) -> Optional[Tuple[str, str]]`
+2. Add configuration defaults to `metadata.json`
+3. Add invocation instructions here
+4. Add to heartbeat check in HEARTBEAT.md
+
+
 
 ## Interaction Style
 
