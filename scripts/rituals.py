@@ -94,7 +94,7 @@ def morning_nudge(db_path: str = None, config: Dict = None) -> Optional[Tuple[st
     c.execute("""
         SELECT role_id, COUNT(*) as wip_count
         FROM tasks
-        WHERE status IN ('todo', 'in_progress')
+        WHERE status IN ('to-do', 'in_progress')
         GROUP BY role_id
     """)
     
@@ -193,7 +193,7 @@ def stuck_alert(db_path: str = None, config: Dict = None) -> Optional[Tuple[str,
         SELECT r.id, r.name
         FROM roles r
         WHERE NOT EXISTS (
-            SELECT 1 FROM tasks WHERE role_id = r.id AND status IN ('todo', 'in_progress')
+            SELECT 1 FROM tasks WHERE role_id = r.id AND status IN ('to-do', 'in_progress')
         )
     """)
     
@@ -233,7 +233,7 @@ def weekly_kaizen(db_path: str = None, config: Dict = None) -> Optional[Tuple[st
     # Committed vs. completed
     c.execute("""
         SELECT COUNT(*) as count FROM tasks
-        WHERE status = 'todo' AND created_at > ?
+        WHERE status = 'to-do' AND created_at > ?
     """, (week_ago,))
     committed = c.fetchone()['count']
     

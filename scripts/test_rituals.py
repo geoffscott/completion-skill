@@ -132,7 +132,7 @@ class RitualTestSuite:
         
         # Scenario 1: WIP overflow
         print("Scenario 1: WIP Overflow Detection\n")
-        self.add_task("Task 1", "todo", "p2", "Work")
+        self.add_task("Task 1", "to-do", "p2", "Work")
         self.add_task("Task 2", "in_progress", "p2", "Work")
         self.add_task("Task 3", "in_progress", "p2", "Work")
         self.add_task("Task 4", "in_progress", "p2", "Work")
@@ -152,8 +152,8 @@ class RitualTestSuite:
         
         # Scenario 2: P1 conflict across roles
         print("Scenario 2: P1 Conflict Detection\n")
-        self.add_task("Work P1", "todo", "p1", "Work")
-        self.add_task("Personal P1", "todo", "p1", "Personal")
+        self.add_task("Work P1", "to-do", "p1", "Work")
+        self.add_task("Personal P1", "to-do", "p1", "Personal")
         
         self.test(
             "Morning Nudge detects P1 conflict across roles",
@@ -201,7 +201,7 @@ class RitualTestSuite:
         
         # Scenario 4: Role starvation
         print("Scenario 4: Role Starvation Detection\n")
-        self.add_task("Work task", "todo", "p2", "Work")
+        self.add_task("Work task", "to-do", "p2", "Work")
         # Personal has no tasks
         
         # Verify
@@ -226,8 +226,8 @@ class RitualTestSuite:
         print("Scenario 5: All Clear Scenarios\n")
         # Balanced to match weights: 3 Work (60%) + 2 Personal (40%)
         # But keep WIP under limit per role
-        self.add_task("Work 1", "todo", "p2", "Work")
-        self.add_task("Personal 1", "todo", "p2", "Personal")
+        self.add_task("Work 1", "to-do", "p2", "Work")
+        self.add_task("Personal 1", "to-do", "p2", "Personal")
         
         self.test(
             "Morning Nudge: all clear (normal WIP, no P1 conflicts)",
