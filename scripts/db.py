@@ -179,17 +179,11 @@ def build_entity_index(registry: Dict) -> Dict[str, str]:
     """
     Build a case-insensitive lookup: {lowercase_name: entity_id}.
     Covers all aliases across people, organizations, projects.
-    Supports both list-of-dicts and dict-of-dicts registry formats.
+    Registry format: {category: {entity_id: {names: [...], ...}}}
     """
     index = {}
     for category in ("people", "organizations", "projects"):
-        cat_data = registry.get(category, {})
-        # Support both formats: list of dicts or dict of dicts
-        if isinstance(cat_data, dict):
-            items = [(eid, entity) for eid, entity in cat_data.items()]
-        else:
-            items = [(entity.get("id", ""), entity) for entity in cat_data]
-        for eid, entity in items:
+        for eid, entity in registry.get(category, {}).items():
             for name in entity.get("names", []):
                 index[name.lower()] = eid
     return index
@@ -235,12 +229,7 @@ def infer_role_from_entities(
     # Build entity_id -> contexts mapping
     contexts = set()
     for category in ("people", "organizations", "projects"):
-        cat_data = registry.get(category, {})
-        if isinstance(cat_data, dict):
-            items = [(eid, entity) for eid, entity in cat_data.items()]
-        else:
-            items = [(entity.get("id", ""), entity) for entity in cat_data]
-        for eid, entity in items:
+        for eid, entity in registry.get(category, {}).items():
             if eid in entity_ids:
                 for ctx in entity.get("contexts", []):
                     contexts.add(ctx.lower())

@@ -149,15 +149,15 @@ def test_entity_enrichment():
     
     # Mock registry
     registry = {
-        "people": [
-            {"id": "dani-pascarella", "names": ["Dani", "Dani Pascarella"], "contexts": ["work"]},
-            {"id": "frank-petriello", "names": ["Frank", "Frank Petriello"], "contexts": ["personal"]},
-        ],
-        "organizations": [
-            {"id": "oneeleven", "names": ["OneEleven", "OE", "1.11"], "contexts": ["work"]},
-            {"id": "saranam", "names": ["Saranam"], "contexts": ["personal"]},
-        ],
-        "projects": [],
+        "people": {
+            "dani-pascarella": {"names": ["Dani", "Dani Pascarella"], "contexts": ["work"]},
+            "frank-petriello": {"names": ["Frank", "Frank Petriello"], "contexts": ["personal"]},
+        },
+        "organizations": {
+            "oneeleven": {"names": ["OneEleven", "OE", "1.11"], "contexts": ["work"]},
+            "saranam": {"names": ["Saranam"], "contexts": ["personal"]},
+        },
+        "projects": {},
     }
     
     index = build_entity_index(registry)
