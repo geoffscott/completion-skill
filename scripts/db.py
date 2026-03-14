@@ -248,29 +248,92 @@ def infer_role_from_entities(
 STATUS_ORDER = {"in_progress": 0, "to-do": 1, "blocked": 2, "backlog": 3, "done": 4}
 
 
-def format_task_line(task: dict, number: int = None) -> str:
-    """Format a single task as a compact one-liner."""
-    prefix = f"#{number}" if number else f"[{task['id']}]"
-    status_icon = {
-        "in_progress": "🔵",
-        "to-do": "⚪",
-        "blocked": "🔴",
-        "backlog": "⏳",
-        "done": "✅",
-    }.get(task["status"], "❓")
-    
-    priority = task["priority"].upper()
+STATUS_ICONS = {
+    "in_progress": "🔵",
+    "to-do": "⚪",
+    "blocked": "🔴",
+    "backlog": "⏳",
+    "done": "✅",
+}
+
+PRIORITY_ICONS = {
+    "p1": "🔴",
+    "p2": "🟡",
+    "p3": "⚪",
+}
+
+STATUS_LABELS = {
+    "in_progress": "IN PROGRESS",
+    "to-do": "TO-DO",
+    "blocked": "BLOCKED",
+    "backlog": "BACKLOG",
+    "done": "DONE",
+}
+
+
+def format_task_line(task: dict, number: int = None, show_role: bool = False) -> str:
+    """Format a single task as an indented bullet line."""
+    num = f"#{number}" if number else f"#{task['id']}"
     due = f" 📅 {task['due_date']}" if task.get("due_date") else ""
+    role = f" ({task['role_name']})" if show_role else ""
+    return f"  {num}: {task['title']}{due}{role}"
+
+
+def format_task_table(
+    tasks: List[dict],
+    numbered: bool = True,
+    group_by: str = "status",
+) -> str:
+    """
+    Format tasks for Discord/Slack-friendly output.
     
-    return f"{prefix} {status_icon} [{priority}] {task['title']}{due}"
-
-
-def format_task_table(tasks: List[dict], numbered: bool = True) -> str:
-    """Format tasks as a numbered list grouped by role."""
+    group_by:
+      "status"  — group by status+priority (default, Discord-friendly)
+      "role"    — group by role, then sort by status+priority within
+    """
     if not tasks:
         return "No tasks found."
 
-    # Group by role
+    if group_by == "role":
+        return _format_by_role(tasks, numbered)
+    return _format_by_status(tasks, numbered)
+
+
+def _format_by_status(tasks: List[dict], numbered: bool) -> str:
+    """Group by status, sub-group by priority. Bold headers with emoji."""
+    # Build groups: (status, priority) -> [tasks]
+    groups = {}
+    for t in tasks:
+        key = (t["status"], t["priority"])
+        if key not in groups:
+            groups[key] = []
+        groups[key].append(t)
+
+    # Sort groups by status order, then priority
+    sorted_keys = sorted(
+        groups.keys(),
+        key=lambda k: (STATUS_ORDER.get(k[0], 9), k[1])
+    )
+
+    show_role = len(set(t["role_name"] for t in tasks)) > 1
+    lines = []
+    n = 1
+    for status, priority in sorted_keys:
+        icon = PRIORITY_ICONS.get(priority, "⚪")
+        label = STATUS_LABELS.get(status, status.upper())
+        lines.append(f"**{icon} {priority.upper()} {label}**")
+        for t in groups[(status, priority)]:
+            num = n if numbered else None
+            lines.append(format_task_line(t, number=num, show_role=show_role))
+            if numbered:
+                n += 1
+        lines.append("")  # blank line between groups
+
+    return "\n".join(lines).rstrip()
+
+
+def _format_by_role(tasks: List[dict], numbered: bool) -> str:
+    """Group by role, sort by status+priority within. For role-filtered views."""
     by_role = {}
     for t in tasks:
         role = t["role_name"]
@@ -281,13 +344,13 @@ def format_task_table(tasks: List[dict], numbered: bool = True) -> str:
     lines = []
     n = 1
     for role_name, role_tasks in by_role.items():
-        lines.append(f"\n**{role_name}**")
-        # Sort within role by status order, then priority
+        lines.append(f"**{role_name}**")
         role_tasks.sort(key=lambda t: (STATUS_ORDER.get(t["status"], 9), t["priority"]))
         for t in role_tasks:
             num = n if numbered else None
             lines.append(format_task_line(t, number=num))
             if numbered:
                 n += 1
+        lines.append("")
 
-    return "\n".join(lines)
+    return "\n".join(lines).rstrip()
