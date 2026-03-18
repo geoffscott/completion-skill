@@ -184,30 +184,31 @@ def test_formatting():
     print("\n--- Formatting ---")
     
     task = {
-        "id": 1, "title": "Test task", "status": "in_progress",
+        "id": 42, "title": "Test task", "status": "in_progress",
         "priority": "p1", "role_name": "Work", "role_id": 1,
         "due_date": "2026-03-15", "notes": None, "tags": None,
         "entities": None, "created_at": "2026-03-13", "updated_at": "2026-03-13"
     }
     
-    line = format_task_line(task, number=1)
-    test("format_task_line includes number", "#1" in line)
+    line = format_task_line(task)
+    test("format_task_line uses DB ID", "#42:" in line)
     test("format_task_line includes title", "Test task" in line)
     test("format_task_line includes due date", "2026-03-15" in line)
     
-    line_with_role = format_task_line(task, number=1, show_role=True)
+    line_with_role = format_task_line(task, show_role=True)
     test("format_task_line shows role when asked", "(Work)" in line_with_role)
     
-    line_no_role = format_task_line(task, number=1, show_role=False)
+    line_no_role = format_task_line(task, show_role=False)
     test("format_task_line hides role by default", "(Work)" not in line_no_role)
     
     # Status-grouped output (default)
     table = format_task_table([task])
     test("format_task_table has bold status header", "**" in table and "IN PROGRESS" in table)
     test("format_task_table has priority icon", "🔴" in table)
+    test("format_task_table uses DB ID not sequence", "#42:" in table)
     
     # Multi-role shows role tags
-    task2 = dict(task, id=2, role_name="Personal", role_id=2, title="Personal task")
+    task2 = dict(task, id=99, role_name="Personal", role_id=2, title="Personal task")
     multi = format_task_table([task, task2])
     test("multi-role shows role tags", "(Work)" in multi and "(Personal)" in multi)
     
