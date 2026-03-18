@@ -93,7 +93,7 @@ def cmd_list(args):
         exclude_done=not args.all,
     )
     
-    print(format_task_table(tasks, numbered=True))
+    print(format_task_table(tasks))
     print(f"\n({len(tasks)} tasks)")
     conn.close()
 

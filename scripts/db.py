@@ -271,17 +271,15 @@ STATUS_LABELS = {
 }
 
 
-def format_task_line(task: dict, number: int = None, show_role: bool = False) -> str:
-    """Format a single task as an indented bullet line."""
-    num = f"#{number}" if number else f"#{task['id']}"
+def format_task_line(task: dict, show_role: bool = False) -> str:
+    """Format a single task as an indented bullet line. Always uses DB ID."""
     due = f" 📅 {task['due_date']}" if task.get("due_date") else ""
     role = f" ({task['role_name']})" if show_role else ""
-    return f"  {num}: {task['title']}{due}{role}"
+    return f"  #{task['id']}: {task['title']}{due}{role}"
 
 
 def format_task_table(
     tasks: List[dict],
-    numbered: bool = True,
     group_by: str = "status",
 ) -> str:
     """
@@ -295,11 +293,11 @@ def format_task_table(
         return "No tasks found."
 
     if group_by == "role":
-        return _format_by_role(tasks, numbered)
-    return _format_by_status(tasks, numbered)
+        return _format_by_role(tasks)
+    return _format_by_status(tasks)
 
 
-def _format_by_status(tasks: List[dict], numbered: bool) -> str:
+def _format_by_status(tasks: List[dict]) -> str:
     """Group by status, sub-group by priority. Bold headers with emoji."""
     # Build groups: (status, priority) -> [tasks]
     groups = {}
@@ -317,22 +315,18 @@ def _format_by_status(tasks: List[dict], numbered: bool) -> str:
 
     show_role = len(set(t["role_name"] for t in tasks)) > 1
     lines = []
-    n = 1
     for status, priority in sorted_keys:
         icon = PRIORITY_ICONS.get(priority, "⚪")
         label = STATUS_LABELS.get(status, status.upper())
         lines.append(f"**{icon} {priority.upper()} {label}**")
         for t in groups[(status, priority)]:
-            num = n if numbered else None
-            lines.append(format_task_line(t, number=num, show_role=show_role))
-            if numbered:
-                n += 1
+            lines.append(format_task_line(t, show_role=show_role))
         lines.append("")  # blank line between groups
 
     return "\n".join(lines).rstrip()
 
 
-def _format_by_role(tasks: List[dict], numbered: bool) -> str:
+def _format_by_role(tasks: List[dict]) -> str:
     """Group by role, sort by status+priority within. For role-filtered views."""
     by_role = {}
     for t in tasks:
@@ -342,15 +336,11 @@ def _format_by_role(tasks: List[dict], numbered: bool) -> str:
         by_role[role].append(t)
 
     lines = []
-    n = 1
     for role_name, role_tasks in by_role.items():
         lines.append(f"**{role_name}**")
         role_tasks.sort(key=lambda t: (STATUS_ORDER.get(t["status"], 9), t["priority"]))
         for t in role_tasks:
-            num = n if numbered else None
-            lines.append(format_task_line(t, number=num))
-            if numbered:
-                n += 1
+            lines.append(format_task_line(t))
         lines.append("")
 
     return "\n".join(lines).rstrip()
