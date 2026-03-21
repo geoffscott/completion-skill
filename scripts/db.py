@@ -271,16 +271,46 @@ STATUS_LABELS = {
 }
 
 
-def format_task_line(task: dict, show_role: bool = False) -> str:
+def format_task_line(task: dict, show_role: bool = False, show_entities: bool = False, registry: Dict = None) -> str:
     """Format a single task as an indented bullet line. Always uses DB ID."""
     due = f" 📅 {task['due_date']}" if task.get("due_date") else ""
     role = f" ({task['role_name']})" if show_role else ""
-    return f"  #{task['id']}: {task['title']}{due}{role}"
+    line = f"  #{task['id']}: {task['title']}{due}{role}"
+    
+    if show_entities and task.get("entities"):
+        entity_ids = json.loads(task["entities"]) if isinstance(task["entities"], str) else task["entities"]
+        if entity_ids and registry:
+            details = []
+            for eid in entity_ids:
+                entity_info = _resolve_entity(eid, registry)
+                if entity_info:
+                    details.append(entity_info)
+                else:
+                    details.append(eid)
+            line += f"\n       → {', '.join(details)}"
+    
+    return line
+
+
+def _resolve_entity(eid: str, registry: Dict) -> Optional[str]:
+    """Look up an entity ID and return a rich display string."""
+    for category in ("people", "organizations", "projects"):
+        cat_data = registry.get(category, {})
+        if eid in cat_data:
+            entity = cat_data[eid]
+            name = entity.get("names", [eid])[0]
+            cat_label = {"people": "👤", "organizations": "🏢", "projects": "📋"}.get(category, "")
+            role_or_desc = entity.get("role", entity.get("description", ""))
+            if role_or_desc:
+                return f"{cat_label} {name} — {role_or_desc}"
+            return f"{cat_label} {name}"
+    return None
 
 
 def format_task_table(
     tasks: List[dict],
     group_by: str = "status",
+    show_entities: bool = False,
 ) -> str:
     """
     Format tasks for Discord/Slack-friendly output.
@@ -293,11 +323,11 @@ def format_task_table(
         return "No tasks found."
 
     if group_by == "role":
-        return _format_by_role(tasks)
-    return _format_by_status(tasks)
+        return _format_by_role(tasks, show_entities=show_entities)
+    return _format_by_status(tasks, show_entities=show_entities)
 
 
-def _format_by_status(tasks: List[dict]) -> str:
+def _format_by_status(tasks: List[dict], show_entities: bool = False) -> str:
     """Group by status, sub-group by priority. Bold headers with emoji."""
     # Build groups: (status, priority) -> [tasks]
     groups = {}
@@ -314,19 +344,20 @@ def _format_by_status(tasks: List[dict]) -> str:
     )
 
     show_role = len(set(t["role_name"] for t in tasks)) > 1
+    registry = load_entity_registry() if show_entities else None
     lines = []
     for status, priority in sorted_keys:
         icon = PRIORITY_ICONS.get(priority, "⚪")
         label = STATUS_LABELS.get(status, status.upper())
         lines.append(f"**{icon} {priority.upper()} {label}**")
         for t in groups[(status, priority)]:
-            lines.append(format_task_line(t, show_role=show_role))
+            lines.append(format_task_line(t, show_role=show_role, show_entities=show_entities, registry=registry))
         lines.append("")  # blank line between groups
 
     return "\n".join(lines).rstrip()
 
 
-def _format_by_role(tasks: List[dict]) -> str:
+def _format_by_role(tasks: List[dict], show_entities: bool = False) -> str:
     """Group by role, sort by status+priority within. For role-filtered views."""
     by_role = {}
     for t in tasks:
@@ -335,12 +366,13 @@ def _format_by_role(tasks: List[dict]) -> str:
             by_role[role] = []
         by_role[role].append(t)
 
+    registry = load_entity_registry() if show_entities else None
     lines = []
     for role_name, role_tasks in by_role.items():
         lines.append(f"**{role_name}**")
         role_tasks.sort(key=lambda t: (STATUS_ORDER.get(t["status"], 9), t["priority"]))
         for t in role_tasks:
-            lines.append(format_task_line(t))
+            lines.append(format_task_line(t, show_entities=show_entities, registry=registry))
         lines.append("")
 
     return "\n".join(lines).rstrip()

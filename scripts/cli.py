@@ -93,7 +93,8 @@ def cmd_list(args):
         exclude_done=not args.all,
     )
     
-    print(format_task_table(tasks))
+    show_ent = getattr(args, 'entities', False) if hasattr(args, 'entities') else False
+    print(format_task_table(tasks, show_entities=show_ent))
     print(f"\n({len(tasks)} tasks)")
     conn.close()
 
@@ -402,6 +403,7 @@ def main():
     p_list.add_argument("--priority", default=None, help="Filter by priority")
     p_list.add_argument("--entity", default=None, help="Filter by entity ID")
     p_list.add_argument("--all", action="store_true", help="Include done tasks")
+    p_list.add_argument("--entities", action="store_true", help="Show entity details")
     
     # update
     p_update = sub.add_parser("update", help="Update a task")
